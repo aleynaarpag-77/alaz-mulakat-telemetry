@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alaz Telemetry Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0f172a',
+                            panel: '#1e293b',
+                            text: '#f8fafc',
+                            accent: '#38bdf8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="bg-dark-bg text-dark-text font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="bg-dark-panel border-b border-slate-700 p-4 shadow-md flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <svg class="w-8 h-8 text-dark-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <h1 class="text-2xl font-bold text-dark-accent tracking-wider">ALAZ TELEMETRY</h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span class="text-sm text-slate-300">Live Connection</span>
+        </div>
+    </header>
+
+    <main class="flex-grow p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-2 bg-dark-panel rounded-xl shadow-lg p-5 border border-slate-700 flex flex-col">
+            <h2 class="text-lg font-semibold mb-4 text-slate-200 border-b border-slate-600 pb-2">Real-time Sensor Data</h2>
+            <div class="flex-grow relative min-h-[400px]">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-dark-panel rounded-xl shadow-lg p-5 border border-slate-700 flex flex-col">
+            <h2 class="text-lg font-semibold mb-4 text-slate-200 border-b border-slate-600 pb-2">Recent Logs</h2>
+            <div class="overflow-y-auto flex-grow h-[400px]">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-xs text-slate-400 uppercase bg-slate-800 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3">Time</th>
+                            <th class="px-4 py-3">Temp (°C)</th>
+                            <th class="px-4 py-3">RPM</th>
+                            <th class="px-4 py-3">Volt (V)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="divide-y divide-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-dark-panel rounded-xl shadow p-5 border border-slate-700 border-l-4 border-l-red-500">
+                <h3 class="text-slate-400 text-sm font-medium">Engine Temperature</h3>
+                <p class="text-3xl font-bold text-white mt-1" id="statTemp">-- °C</p>
+            </div>
+            <div class="bg-dark-panel rounded-xl shadow p-5 border border-slate-700 border-l-4 border-l-blue-500">
+                <h3 class="text-slate-400 text-sm font-medium">Engine RPM</h3>
+                <p class="text-3xl font-bold text-white mt-1" id="statRpm">--</p>
+            </div>
+            <div class="bg-dark-panel rounded-xl shadow p-5 border border-slate-700 border-l-4 border-l-yellow-500">
+                <h3 class="text-slate-400 text-sm font-medium">Battery Voltage</h3>
+                <p class="text-3xl font-bold text-white mt-1" id="statVolt">-- V</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#334155';
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'RPM',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Voltage (V)',
+                        data: [],
+                        borderColor: '#eab308',
+                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temp (°C) / Volt (V)'
+                        },
+                        min: 0,
+                        max: 150
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'RPM'
+                        },
+                        min: 0,
+                        max: 8000,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    },
+                }
+            }
+        });
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/latest?limit=20');
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                
+                const chartData = [...data].reverse();
+                
+                chart.data.labels = chartData.map(d => moment(d.timestamp).format('HH:mm:ss'));
+                chart.data.datasets[0].data = chartData.map(d => d.temperature);
+                chart.data.datasets[1].data = chartData.map(d => d.rpm);
+                chart.data.datasets[2].data = chartData.map(d => d.voltage);
+                chart.update();
+
+                if (data.length > 0) {
+                    const latest = data[0];
+                    document.getElementById('statTemp').textContent = `${latest.temperature} °C`;
+                    document.getElementById('statRpm').textContent = `${latest.rpm}`;
+                    document.getElementById('statVolt').textContent = `${latest.voltage} V`;
+                }
+
+                const tbody = document.getElementById('logsTableBody');
+                tbody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-700/50 transition-colors";
+                    
+                    const timeCell = document.createElement('td');
+                    timeCell.className = "px-4 py-2 font-mono text-xs";
+                    timeCell.textContent = moment(row.timestamp).format('HH:mm:ss');
+                    
+                    const tempCell = document.createElement('td');
+                    tempCell.className = "px-4 py-2 text-red-400";
+                    tempCell.textContent = row.temperature;
+                    
+                    const rpmCell = document.createElement('td');
+                    rpmCell.className = "px-4 py-2 text-blue-400";
+                    rpmCell.textContent = row.rpm;
+                    
+                    const voltCell = document.createElement('td');
+                    voltCell.className = "px-4 py-2 text-yellow-400";
+                    voltCell.textContent = row.voltage;
+                    
+                    tr.appendChild(timeCell);
+                    tr.appendChild(tempCell);
+                    tr.appendChild(rpmCell);
+                    tr.appendChild(voltCell);
+                    
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Error fetching telemetry data:', error);
+            }
+        }
+
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
