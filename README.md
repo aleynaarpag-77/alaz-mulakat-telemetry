@@ -22,10 +22,12 @@ Projeyi çalıştırmak için sisteminizde Python yüklü olması gerekmektedir 
    ```
 
 2. **Uygulamayı Başlatın:**
-   FastAPI uygulamasını `uvicorn` kullanarak ayağa kaldırın:
-   ```bash
+  2. **Uygulamayı Başlatın:**
+   `backend` klasörüne girip FastAPI uygulamasını `uvicorn` ile ayağa kaldırın:
+```bash
+   cd backend
    uvicorn main:app --reload
-   ```
+```
 
 3. **Arayüze Erişin:**
    Tarayıcınızı açın ve aşağıdaki adrese gidin:
