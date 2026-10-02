@@ -43,3 +43,10 @@ Projeyi çalıştırmak için sisteminizde Python yüklü olması gerekmektedir 
 - **Tailwind CSS:** Hızlı ve tutarlı bir "dark mode" endüstriyel arayüz tasarımı için, önceden tanımlı class'larla CSS yazma ihtiyacını azaltıyor, geliştirme hızını artırıyor.
 - **Chart.js:** Gerçek zamanlı sensör verilerini (sıcaklık, RPM, voltaj) okunabilir, çift eksenli (dual-axis) bir çizgi grafikte göstermek için hafif ve esnek bir grafik kütüphanesi.
 - **Moment.js:** Zaman damgalarını (timestamp) kullanıcı için okunabilir saat formatına (`HH:mm:ss`) çevirmek için kullanıldı.
+
+
+## Ekran Görüntüsü ve Demo
+
+![Dashboard Ekran Görüntüsü](screenshots/dashboard.png)
+
+🎥 [Demo Videosu (30+ saniye)](screenshots/demo.mov)
